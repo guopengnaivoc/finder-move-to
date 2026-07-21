@@ -20,9 +20,13 @@ appid=$(/usr/libexec/PlistBuddy -c "Print :NSServices:0:NSRequiredContext:NSAppl
 ftype=$(/usr/libexec/PlistBuddy -c "Print :NSServices:0:NSSendFileTypes:0" "$C/Info.plist")
 [ "$ftype" = "public.item" ] || { echo "FAIL: NSSendFileTypes 不对: [$ftype]"; exit 1; }
 
-# 注入的 AppleScript 必须与源文件一致
-emb=$(/usr/libexec/PlistBuddy -c "Print :actions:0:action:ActionParameters:source" "$C/document.wflow")
-src=$(cat "$ROOT/src/move_to.applescript")
-[ "$emb" = "$src" ] || { echo "FAIL: 注入脚本与源不一致"; exit 1; }
+# 注入的 AppleScript 必须与源文件逐字一致
+# 用 python(plistlib)做权威比较:PlistBuddy 对超长多行字符串打印会失真
+/usr/bin/python3 - "$C/document.wflow" "$ROOT/src/move_to.applescript" <<'PY' || { echo "FAIL: 注入脚本与源不一致"; exit 1; }
+import plistlib, sys
+emb = plistlib.load(open(sys.argv[1], 'rb'))['actions'][0]['action']['ActionParameters']['source']
+src = open(sys.argv[2], encoding='utf-8').read()
+sys.exit(0 if emb == src else 1)
+PY
 
 echo "PASS"

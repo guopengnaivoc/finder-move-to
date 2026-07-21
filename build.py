@@ -15,6 +15,12 @@ def main() -> None:
     CONTENTS.mkdir(parents=True, exist_ok=True)
 
     info = {
+        # bundle 标识:系统能正常显示的服务都带这些键,缺了会导致右键项不稳定/不显示
+        "CFBundleDevelopmentRegion": "zh_CN",
+        "CFBundleIdentifier": "com.local.finder.moveto",
+        "CFBundleName": "移动到…",
+        "CFBundleShortVersionString": "1.0",
+        "CFBundlePackageType": "wflw",
         "NSServices": [
             {
                 "NSMenuItem": {"default": "移动到…"},
@@ -68,6 +74,8 @@ def main() -> None:
         "actions": [action],
         "connectors": {},
         "workflowMetaData": {
+            # 注:纯脚本无法把它变成右键顶层“快速操作”;文件夹会落在“服务”子菜单。
+            # 想要顶层显示需用 Automator GUI 另存为“快速操作”(见 README)。
             "serviceApplicationBundleID": "com.apple.finder",
             "serviceApplicationPath": "/System/Library/CoreServices/Finder.app",
             "serviceInputTypeIdentifier": "com.apple.Automator.fileSystemObject",
