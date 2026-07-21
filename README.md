@@ -31,3 +31,13 @@
 - 逻辑源:`src/move_to.applescript`(`moveItems` 处理器有自动化测试)。
 - 打包:`python3 build.py` 生成 `build/移动到….workflow`。
 - 测试:`./tests/test_moveitems.sh` 和 `./tests/test_build.sh`。
+
+## 手动验收清单
+
+首次安装后,在 Finder 里逐项确认:
+
+1. 新建两个测试文件夹 `A`、`B`,在 `A` 里放一个测试文件 `t.txt`。
+2. 选中 `A/t.txt` → 右键 → 快速操作 → 确认出现「移动到…」并点击。
+3. 弹出文件夹选择框 → 选 `B` → 确认 `t.txt` 从 `A` 消失、出现在 `B`。
+4. 一次选中多个文件 → 移动到… → 选目标 → 确认全部移动过去。
+5. 再点一次「移动到…」但在选择框点"取消" → 确认文件原封不动。

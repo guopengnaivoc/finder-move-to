@@ -26,5 +26,13 @@ out2=$(osascript -e "set sc to load script (POSIX file \"$SCPT\")" \
 [ "$(cat "$work/dest/b.txt")" = "world" ] || { echo "FAIL: 冲突破坏了目标已有文件"; rm -rf "$work"; exit 1; }
 [ -e "$work/src/b.txt" ] || { echo "FAIL: 冲突时源文件丢失"; rm -rf "$work"; exit 1; }
 
+# 3) 覆盖真实服务路径:传入 alias(而非 POSIX 字符串)
+echo aliascase > "$work/src/c.txt"
+out3=$(osascript -e "set sc to load script (POSIX file \"$SCPT\")" \
+                -e "tell sc to moveItems({(POSIX file \"$work/src/c.txt\") as alias}, (POSIX file \"$work/dest\") as alias)")
+[ -f "$work/dest/c.txt" ] || { echo "FAIL: alias 路径未移动到目标"; rm -rf "$work"; exit 1; }
+[ -e "$work/src/c.txt" ] && { echo "FAIL: alias 路径源仍存在(复制非移动)"; rm -rf "$work"; exit 1; }
+[ -z "$out3" ] || { echo "FAIL: alias 路径预期无失败,实际: $out3"; rm -rf "$work"; exit 1; }
+
 echo "PASS"
 rm -rf "$work"

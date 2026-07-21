@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """把 src/move_to.applescript 注入生成 Automator 服务工作流 bundle。"""
 import plistlib
 import uuid
