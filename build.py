@@ -14,15 +14,12 @@ def main() -> None:
     source = SRC.read_text(encoding="utf-8")
     CONTENTS.mkdir(parents=True, exist_ok=True)
 
+    # NSIconName/NSBackgroundColorName 让它以“快速操作”外观出现在右键顶层
     info = {
-        # bundle 标识:系统能正常显示的服务都带这些键,缺了会导致右键项不稳定/不显示
-        "CFBundleDevelopmentRegion": "zh_CN",
-        "CFBundleIdentifier": "com.local.finder.moveto",
-        "CFBundleName": "移动到…",
-        "CFBundleShortVersionString": "1.0",
-        "CFBundlePackageType": "wflw",
         "NSServices": [
             {
+                "NSBackgroundColorName": "background",
+                "NSIconName": "NSActionTemplate",
                 "NSMenuItem": {"default": "移动到…"},
                 "NSMessage": "runWorkflowAsService",
                 "NSRequiredContext": {"NSApplicationIdentifier": "com.apple.finder"},
@@ -73,14 +70,26 @@ def main() -> None:
         "AMDocumentVersion": "2",
         "actions": [action],
         "connectors": {},
+        # 复刻 Automator“快速操作”导出的元数据;presentationMode=15 是让它进入
+        # 右键顶层“快速操作”区(而非“服务”子菜单)的关键。
         "workflowMetaData": {
-            # 注:纯脚本无法把它变成右键顶层“快速操作”;文件夹会落在“服务”子菜单。
-            # 想要顶层显示需用 Automator GUI 另存为“快速操作”(见 README)。
+            "applicationBundleID": "com.apple.finder",
+            "applicationBundleIDsByPath": {
+                "/System/Library/CoreServices/Finder.app": "com.apple.finder"
+            },
+            "applicationPath": "/System/Library/CoreServices/Finder.app",
+            "applicationPaths": ["/System/Library/CoreServices/Finder.app"],
+            "inputTypeIdentifier": "com.apple.Automator.fileSystemObject",
+            "outputTypeIdentifier": "com.apple.Automator.nothing",
+            "presentationMode": 15,
+            "processesInput": False,
             "serviceApplicationBundleID": "com.apple.finder",
             "serviceApplicationPath": "/System/Library/CoreServices/Finder.app",
             "serviceInputTypeIdentifier": "com.apple.Automator.fileSystemObject",
             "serviceOutputTypeIdentifier": "com.apple.Automator.nothing",
-            "serviceProcessesInput": 0,
+            "serviceProcessesInput": False,
+            "systemImageName": "NSActionTemplate",
+            "useAutomaticInputType": False,
             "workflowTypeIdentifier": "com.apple.Automator.servicesMenu",
         },
     }
