@@ -23,6 +23,8 @@ echo again > "$work/src/b.txt"
 out2=$(osascript -e "set sc to load script (POSIX file \"$SCPT\")" \
                 -e "tell sc to moveItems({\"$work/src/b.txt\"}, (POSIX file \"$work/dest\") as alias)")
 [ -n "$out2" ] || { echo "FAIL: 同名冲突应返回失败信息"; rm -rf "$work"; exit 1; }
+[ "$(cat "$work/dest/b.txt")" = "world" ] || { echo "FAIL: 冲突破坏了目标已有文件"; rm -rf "$work"; exit 1; }
+[ -e "$work/src/b.txt" ] || { echo "FAIL: 冲突时源文件丢失"; rm -rf "$work"; exit 1; }
 
 echo "PASS"
 rm -rf "$work"
