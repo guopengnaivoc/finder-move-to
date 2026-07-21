@@ -14,6 +14,12 @@ done
 name=$(/usr/libexec/PlistBuddy -c "Print :NSServices:0:NSMenuItem:default" "$C/Info.plist")
 [ "$name" = "移动到…" ] || { echo "FAIL: 菜单名不对: [$name]"; exit 1; }
 
+# Info.plist 必须限定 Finder,并对文件/文件夹生效
+appid=$(/usr/libexec/PlistBuddy -c "Print :NSServices:0:NSRequiredContext:NSApplicationIdentifier" "$C/Info.plist")
+[ "$appid" = "com.apple.finder" ] || { echo "FAIL: 未限定 Finder: [$appid]"; exit 1; }
+ftype=$(/usr/libexec/PlistBuddy -c "Print :NSServices:0:NSSendFileTypes:0" "$C/Info.plist")
+[ "$ftype" = "public.item" ] || { echo "FAIL: NSSendFileTypes 不对: [$ftype]"; exit 1; }
+
 # 注入的 AppleScript 必须与源文件一致
 emb=$(/usr/libexec/PlistBuddy -c "Print :actions:0:action:ActionParameters:source" "$C/document.wflow")
 src=$(cat "$ROOT/src/move_to.applescript")
