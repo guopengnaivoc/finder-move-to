@@ -1,5 +1,9 @@
 # 移动到… — Finder 右键「移动到」快速操作
 
+[![Release](https://img.shields.io/github/v/release/guopengnaivoc/finder-move-to)](https://github.com/guopengnaivoc/finder-move-to/releases/latest)
+![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
+
 给 macOS 访达(Finder)的右键菜单加一个 **「移动到…」** 快速操作:选中文件/文件夹 → 右键(触控板双指按压亦可)→ **移动到…** → 弹框选目标文件夹 → **直接移动过去**(真移动,不是复制副本)。
 
 - 🍎 **纯 macOS 原生**:只用系统自带能力,**零第三方软件**。
@@ -13,6 +17,12 @@
 macOS(在 macOS 26 / Apple Silicon 上验证)。只用系统自带的 `python3` / `osascript` / `Automator`,无需额外安装。
 
 ## 安装
+
+### 方式 A:不用终端(推荐给普通用户)
+
+到 [**Releases**](https://github.com/guopengnaivoc/finder-move-to/releases/latest) 下载 `move-to-quickaction.zip` → 解压 → **双击** `移动到….workflow` → 在弹窗里点「**安装**」。
+
+### 方式 B:命令行(开发者)
 
 ```bash
 ./install.sh
