@@ -11,14 +11,29 @@ on run {input, parameters}
 	end try
 	set dd to my destDir(destFolder)
 	set trashDir to (do shell script "echo $HOME/.Trash/")
-	set failed to {}
+
+	-- 先筛出真正要移动的项(排除已在目标文件夹里的),并统计其中同名冲突个数
+	set toMove to {}
 	repeat with anItem in input
-		set srcPosix to my toPosix(anItem)
-		if my isSameFolder(srcPosix, dd) then
-			-- 已经在目标文件夹里,无需移动,跳过
-		else
-			set choice to "move"
-			if my hasConflict(srcPosix, dd) then
+		set p to my toPosix(anItem)
+		if not my isSameFolder(p, dd) then set end of toMove to p
+	end repeat
+	set conflictCount to 0
+	repeat with k from 1 to count of toMove
+		if my hasConflict(item k of toMove, dd) then set conflictCount to conflictCount + 1
+	end repeat
+
+	set applyAll to false
+	set savedChoice to "skip"
+	set askedApplyAll to false
+	set failed to {}
+	repeat with k from 1 to count of toMove
+		set srcPosix to item k of toMove
+		set choice to "move"
+		if my hasConflict(srcPosix, dd) then
+			if applyAll then
+				set choice to savedChoice
+			else
 				set nm to my baseName(srcPosix)
 				try
 					set btn to button returned of (display dialog "目标文件夹已存在同名项:" & return & nm & return & return & "请选择处理方式:" buttons {"跳过", "两者都保留", "替换"} default button "两者都保留" with icon caution)
@@ -32,11 +47,25 @@ on run {input, parameters}
 				else
 					set choice to "skip"
 				end if
+				-- 还有多个同名项时,只问一次:其余是否统一按同样方式处理
+				if (conflictCount > 1) and (not askedApplyAll) then
+					set askedApplyAll to true
+					try
+						set ans to button returned of (display dialog "其余同名项也都用「" & btn & "」处理吗?" buttons {"否,逐个问", "是,全部这样"} default button "是,全部这样" with icon note)
+					on error number -128
+						set ans to "否,逐个问"
+					end try
+					if ans is "是,全部这样" then
+						set applyAll to true
+						set savedChoice to choice
+					end if
+				end if
 			end if
-			set em to my moveOne(srcPosix, dd, choice, trashDir)
-			if em is not "" then set end of failed to em
 		end if
+		set em to my moveOne(srcPosix, dd, choice, trashDir)
+		if em is not "" then set end of failed to em
 	end repeat
+
 	if (count of failed) > 0 then
 		set AppleScript's text item delimiters to return
 		set report to (failed as text)
