@@ -49,4 +49,19 @@ run "moveOne(\"$work/src/a.txt\", $DST, \"replace\", $TRASH)" >/dev/null
 [ -e "$work/src/a.txt" ] && { echo "FAIL: replace 源应已移走"; exit 1; }
 [ "$(cat "$work/trash/a.txt")" = "old" ] || { echo "FAIL: replace 旧文件应进废纸篓(可恢复)"; exit 1; }
 
+# 6) isSameFolder:源在目标文件夹内应为 true,否则 false
+echo z > "$work/src/z.txt"
+[ "$(run "isSameFolder(\"$work/src/z.txt\", \"$work/src/\")")" = "true" ] || { echo "FAIL: 同文件夹应为 true"; exit 1; }
+[ "$(run "isSameFolder(\"$work/src/z.txt\", $DST)")" = "false" ] || { echo "FAIL: 不同文件夹应为 false"; exit 1; }
+
+# 7) 替换时废纸篓已有同名:旧的去重为 'dup 2.txt',原废纸篓文件不被覆盖
+mkdir -p "$work/d2"
+echo pre > "$work/trash/dup.txt"
+echo oldd > "$work/d2/dup.txt"
+echo neww > "$work/src/dup.txt"
+run "moveOne(\"$work/src/dup.txt\", \"$work/d2/\", \"replace\", $TRASH)" >/dev/null
+[ "$(cat "$work/d2/dup.txt")" = "neww" ] || { echo "FAIL: replace 目标应为新内容"; exit 1; }
+[ "$(cat "$work/trash/dup.txt")" = "pre" ] || { echo "FAIL: 废纸篓原有文件不应被覆盖"; exit 1; }
+[ "$(cat "$work/trash/dup 2.txt")" = "oldd" ] || { echo "FAIL: 旧文件应去重进废纸篓为 'dup 2.txt'"; exit 1; }
+
 echo "PASS"

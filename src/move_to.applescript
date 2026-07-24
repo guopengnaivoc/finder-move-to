@@ -14,24 +14,28 @@ on run {input, parameters}
 	set failed to {}
 	repeat with anItem in input
 		set srcPosix to my toPosix(anItem)
-		set choice to "move"
-		if my hasConflict(srcPosix, dd) then
-			set nm to my baseName(srcPosix)
-			try
-				set btn to button returned of (display dialog "目标文件夹已存在同名项:" & return & nm & return & return & "请选择处理方式:" buttons {"跳过", "两者都保留", "替换"} default button "两者都保留" with icon caution)
-			on error number -128
-				set btn to "跳过"
-			end try
-			if btn is "替换" then
-				set choice to "replace"
-			else if btn is "两者都保留" then
-				set choice to "keepboth"
-			else
-				set choice to "skip"
+		if my isSameFolder(srcPosix, dd) then
+			-- 已经在目标文件夹里,无需移动,跳过
+		else
+			set choice to "move"
+			if my hasConflict(srcPosix, dd) then
+				set nm to my baseName(srcPosix)
+				try
+					set btn to button returned of (display dialog "目标文件夹已存在同名项:" & return & nm & return & return & "请选择处理方式:" buttons {"跳过", "两者都保留", "替换"} default button "两者都保留" with icon caution)
+				on error number -128
+					set btn to "跳过"
+				end try
+				if btn is "替换" then
+					set choice to "replace"
+				else if btn is "两者都保留" then
+					set choice to "keepboth"
+				else
+					set choice to "skip"
+				end if
 			end if
+			set em to my moveOne(srcPosix, dd, choice, trashDir)
+			if em is not "" then set end of failed to em
 		end if
-		set em to my moveOne(srcPosix, dd, choice, trashDir)
-		if em is not "" then set end of failed to em
 	end repeat
 	if (count of failed) > 0 then
 		set AppleScript's text item delimiters to return
@@ -63,15 +67,29 @@ on baseName(srcPosix)
 	return do shell script "/usr/bin/basename " & quoted form of srcPosix
 end baseName
 
--- 目标里是否已存在同名项
-on hasConflict(srcPosix, dd)
-	set target to dd & my baseName(srcPosix)
+-- 源项目所在的父文件夹(以 / 结尾)
+on parentDir(srcPosix)
+	return (do shell script "/usr/bin/dirname " & quoted form of srcPosix) & "/"
+end parentDir
+
+-- 源项目是否已经在目标文件夹里
+on isSameFolder(srcPosix, dd)
+	return (my parentDir(srcPosix)) is dd
+end isSameFolder
+
+-- 某 POSIX 路径是否存在
+on pathExists(posixPath)
 	try
-		do shell script "/bin/test -e " & quoted form of target
+		do shell script "/bin/test -e " & quoted form of posixPath
 		return true
 	on error
 		return false
 	end try
+end pathExists
+
+-- 目标里是否已存在同名项
+on hasConflict(srcPosix, dd)
+	return my pathExists(dd & my baseName(srcPosix))
 end hasConflict
 
 -- 执行单项移动。choice: "move" | "replace" | "keepboth" | "skip"
@@ -81,14 +99,10 @@ on moveOne(srcPosix, dd, choice, trashDir)
 	try
 		set nm to my baseName(srcPosix)
 		if choice is "replace" then
-			-- 旧的先移入废纸篓(可恢复),再把新的移入;若废纸篓里已有同名项才改名避免冲突
+			-- 旧的先移入废纸篓(可恢复);若废纸篓已有同名,改成不冲突的名字
 			set trashName to nm
-			try
-				do shell script "/bin/test -e " & quoted form of (trashDir & nm)
-				set trashName to my uniqueName(trashDir, nm)
-			end try
-			set trashTarget to trashDir & trashName
-			do shell script "/bin/mv " & quoted form of (dd & nm) & " " & quoted form of trashTarget
+			if my pathExists(trashDir & nm) then set trashName to my uniqueName(trashDir, nm)
+			do shell script "/bin/mv " & quoted form of (dd & nm) & " " & quoted form of (trashDir & trashName)
 			do shell script "/bin/mv " & quoted form of srcPosix & " " & quoted form of (dd & nm)
 		else if choice is "keepboth" then
 			set newName to my uniqueName(dd, nm)
@@ -112,12 +126,8 @@ on uniqueName(dir, name)
 		else
 			set candidate to base & " " & (i as text) & "." & ext
 		end if
-		try
-			do shell script "/bin/test -e " & quoted form of (dir & candidate)
-			set i to i + 1
-		on error
-			return candidate
-		end try
+		if not (my pathExists(dir & candidate)) then return candidate
+		set i to i + 1
 	end repeat
 end uniqueName
 
