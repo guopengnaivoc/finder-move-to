@@ -29,4 +29,17 @@ src = open(sys.argv[2], encoding='utf-8').read()
 sys.exit(0 if emb == src else 1)
 PY
 
+# 英文版:菜单名「Move To…」,且注入脚本里 uiLang 已翻成 en
+/usr/bin/python3 "$ROOT/build.py" en || { echo "FAIL: 英文版构建失败"; exit 1; }
+CE="$ROOT/build/Move To….workflow/Contents"
+[ -f "$CE/Info.plist" ] || { echo "FAIL: 英文版缺 Info.plist"; exit 1; }
+plutil -lint "$CE/Info.plist" >/dev/null || { echo "FAIL: 英文版 Info.plist 非法"; exit 1; }
+enname=$(/usr/libexec/PlistBuddy -c "Print :NSServices:0:NSMenuItem:default" "$CE/Info.plist")
+[ "$enname" = "Move To…" ] || { echo "FAIL: 英文版菜单名不对: [$enname]"; exit 1; }
+/usr/bin/python3 - "$CE/document.wflow" <<'PY' || { echo "FAIL: 英文版 uiLang 未翻成 en"; exit 1; }
+import plistlib, sys
+emb = plistlib.load(open(sys.argv[1], 'rb'))['actions'][0]['action']['ActionParameters']['source']
+sys.exit(0 if 'property uiLang : "en"' in emb else 1)
+PY
+
 echo "PASS"

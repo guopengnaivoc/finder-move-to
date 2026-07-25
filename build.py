@@ -1,17 +1,29 @@
 #!/usr/bin/python3
 """把 src/move_to.applescript 注入生成 Automator 服务工作流 bundle。"""
 import plistlib
+import sys
 import uuid
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC = ROOT / "src" / "move_to.applescript"
-BUNDLE = ROOT / "build" / "移动到….workflow"
+
+# 语言:zh(默认,菜单「移动到…」)或 en(菜单「Move To…」,对话框英文)
+LANG = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] in ("zh", "en") else "zh"
+NAMES = {
+    "zh": {"menu": "移动到…", "bundle": "移动到…"},
+    "en": {"menu": "Move To…", "bundle": "Move To…"},
+}[LANG]
+
+BUNDLE = ROOT / "build" / f"{NAMES['bundle']}.workflow"
 CONTENTS = BUNDLE / "Contents"
 
 
 def main() -> None:
     source = SRC.read_text(encoding="utf-8")
+    if LANG == "en":
+        # 英文版:把界面语言开关翻成 en(菜单名另在 Info.plist 里设)
+        source = source.replace('property uiLang : "zh"', 'property uiLang : "en"')
     CONTENTS.mkdir(parents=True, exist_ok=True)
 
     # NSIconName/NSBackgroundColorName 让它以“快速操作”外观出现在右键顶层
@@ -20,7 +32,7 @@ def main() -> None:
             {
                 "NSBackgroundColorName": "background",
                 "NSIconName": "NSActionTemplate",
-                "NSMenuItem": {"default": "移动到…"},
+                "NSMenuItem": {"default": NAMES["menu"]},
                 "NSMessage": "runWorkflowAsService",
                 "NSRequiredContext": {"NSApplicationIdentifier": "com.apple.finder"},
                 "NSSendFileTypes": ["public.item"],

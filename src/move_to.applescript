@@ -1,11 +1,15 @@
--- 移动到… Quick Action(v2:纯 shell 搬运,不碰访达,不提权)
+-- 移动到… / Move To… Quick Action(v2:纯 shell 搬运,不碰访达,不提权)
 -- 选中项移动到用户选择的文件夹;目标存在同名项时弹框三选:替换 / 两者都保留 / 跳过。
 -- 搬运/删除全部走 do shell script 的 mv/test/basename,不发送任何 Apple Events 给访达。
+-- uiLang 决定界面语言("zh" 或 "en");构建英文版时由 build.py 改成 "en"。
+
+property uiLang : "zh"
 
 on run {input, parameters}
 	if input is {} then return input
+	set S to my uiStrings()
 	try
-		set destFolder to (choose folder with prompt "移动到哪个文件夹?")
+		set destFolder to (choose folder with prompt (prompt of S))
 	on error number -128
 		return input
 	end try
@@ -36,13 +40,13 @@ on run {input, parameters}
 			else
 				set nm to my baseName(srcPosix)
 				try
-					set btn to button returned of (display dialog "目标文件夹已存在同名项:" & return & nm & return & return & "请选择处理方式:" buttons {"跳过", "两者都保留", "替换"} default button "两者都保留" with icon caution)
+					set btn to button returned of (display dialog (conflictHead of S) & return & nm & return & return & (conflictAsk of S) buttons {skipBtn of S, keepBtn of S, replaceBtn of S} default button (keepBtn of S) with icon caution)
 				on error number -128
-					set btn to "跳过"
+					set btn to (skipBtn of S)
 				end try
-				if btn is "替换" then
+				if btn is (replaceBtn of S) then
 					set choice to "replace"
-				else if btn is "两者都保留" then
+				else if btn is (keepBtn of S) then
 					set choice to "keepboth"
 				else
 					set choice to "skip"
@@ -51,11 +55,11 @@ on run {input, parameters}
 				if (conflictCount > 1) and (not askedApplyAll) then
 					set askedApplyAll to true
 					try
-						set ans to button returned of (display dialog "其余同名项也都用「" & btn & "」处理吗?" buttons {"否,逐个问", "是,全部这样"} default button "是,全部这样" with icon note)
+						set ans to button returned of (display dialog (applyHead of S) & btn & (applyTail of S) buttons {askEachBtn of S, applyAllBtn of S} default button (applyAllBtn of S) with icon note)
 					on error number -128
-						set ans to "否,逐个问"
+						set ans to (askEachBtn of S)
 					end try
-					if ans is "是,全部这样" then
+					if ans is (applyAllBtn of S) then
 						set applyAll to true
 						set savedChoice to choice
 					end if
@@ -70,10 +74,19 @@ on run {input, parameters}
 		set AppleScript's text item delimiters to return
 		set report to (failed as text)
 		set AppleScript's text item delimiters to ""
-		display dialog "有 " & (count of failed) & " 项移动失败:" & return & report buttons {"好"} default button "好" with icon caution
+		display dialog (failHead of S) & (count of failed) & (failTail of S) & return & report buttons {okBtn of S} default button (okBtn of S) with icon caution
 	end if
 	return input
 end run
+
+-- 界面文案(按 uiLang 返回中文或英文)
+on uiStrings()
+	if uiLang is "en" then
+		return {prompt:"Move the selected items to which folder?", conflictHead:"An item with the same name already exists:", conflictAsk:"What would you like to do?", skipBtn:"Skip", keepBtn:"Keep Both", replaceBtn:"Replace", applyHead:"Apply “", applyTail:"” to the remaining duplicates too?", askEachBtn:"Ask Each", applyAllBtn:"Apply to All", failHead:"", failTail:" item(s) could not be moved:", okBtn:"OK"}
+	else
+		return {prompt:"移动到哪个文件夹?", conflictHead:"目标文件夹已存在同名项:", conflictAsk:"请选择处理方式:", skipBtn:"跳过", keepBtn:"两者都保留", replaceBtn:"替换", applyHead:"其余同名项也都用「", applyTail:"」处理吗?", askEachBtn:"否,逐个问", applyAllBtn:"是,全部这样", failHead:"有 ", failTail:" 项移动失败:", okBtn:"好"}
+	end if
+end uiStrings
 
 -- 把输入项(Finder 传入的 alias,或 POSIX 路径文本)统一成 POSIX 路径文本
 on toPosix(anItem)
