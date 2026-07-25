@@ -20,15 +20,21 @@ macOS(在 macOS 26 / Apple Silicon 上验证)。只用系统自带的 `python3` 
 
 ### 方式 A:不用终端(推荐给普通用户)
 
-到 [**Releases**](https://github.com/guopengnaivoc/finder-move-to/releases/latest) 下载 `move-to-quickaction.zip` → 解压 → **双击** `移动到….workflow` → 在弹窗里点「**安装**」。
+到 [**Releases**](https://github.com/guopengnaivoc/finder-move-to/releases/latest) 下载安装包 → 解压 → **双击** `.workflow` → 在弹窗里点「**安装**」。
+
+- 中文版:`move-to-quickaction.zip`(菜单显示「移动到…」)
+- 英文版:`move-to-en.zip`(菜单显示「Move To…」,对话框也全英文)
 
 ### 方式 B:命令行(开发者)
 
 ```bash
-./install.sh
+./install.sh        # 中文版「移动到…」
+./install.sh en     # 英文版「Move To…」(菜单 + 对话框全英文)
 ```
 
-安装后如右键里没立刻出现,重启访达即可:`killall Finder`。
+两个版本可并存,互不影响。安装后如右键里没立刻出现,重启访达即可:`killall Finder`。
+
+> **Language / 语言**:提供中文版「移动到…」和英文版「Move To…」两套,菜单名与所有对话框分别为中文/英文。An English build (menu **"Move To…"** with English dialogs) is available — install it with `./install.sh en` or the `move-to-en.zip` asset.
 
 ## 使用
 
